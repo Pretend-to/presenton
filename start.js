@@ -151,15 +151,15 @@ const startServers = async () => {
     console.error("Next.js process failed to start:", err);
   });
 
-  const ollamaProcess = spawn("ollama", ["serve"], {
-    cwd: "/",
-    stdio: "inherit",
-    env: process.env,
-  });
+  // const ollamaProcess = spawn("ollama", ["serve"], {
+  //   cwd: "/",
+  //   stdio: "inherit",
+  //   env: process.env,
+  // });
 
-  ollamaProcess.on("error", (err) => {
-    console.error("Ollama process failed to start:", err);
-  });
+  // ollamaProcess.on("error", (err) => {
+  //   console.error("Ollama process failed to start:", err);
+  // });
 
   // Keep the Node process alive until both servers exit
   const exitCode = await Promise.race([

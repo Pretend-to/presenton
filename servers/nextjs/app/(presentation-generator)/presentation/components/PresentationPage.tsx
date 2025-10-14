@@ -128,7 +128,7 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
         {isSaving && <Loader2 className="w-6 h-6 animate-spin text-blue-500" />}
       </div>
 
-      <Header presentation_id={presentation_id} currentSlide={selectedSlide} />
+      {/* <Header presentation_id={presentation_id} currentSlide={selectedSlide} /> */}
       <Help />
 
       <div
@@ -137,13 +137,13 @@ const PresentationPage: React.FC<PresentationPageProps> = ({
         }}
         className="flex flex-1 relative pt-6"
       >
-        <SidePanel
+        {/* <SidePanel
           selectedSlide={selectedSlide}
           onSlideClick={handleSlideClick}
           loading={loading}
           isMobilePanelOpen={isMobilePanelOpen}
           setIsMobilePanelOpen={setIsMobilePanelOpen}
-        />
+        /> */}
         
         <div className="flex-1 h-[calc(100vh-100px)] overflow-y-auto">
           <div
