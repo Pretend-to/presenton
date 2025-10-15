@@ -7,7 +7,7 @@ from docling.document_converter import (
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.datamodel.base_models import InputFormat
 
-
+# 文档处理服务
 class DoclingService:
     def __init__(self):
         self.pipeline_options = PdfPipelineOptions()
@@ -29,5 +29,8 @@ class DoclingService:
         )
 
     def parse_to_markdown(self, file_path: str) -> str:
+        """
+        将文档转换为markdown格式
+        """
         result = self.converter.convert(file_path)
         return result.document.export_to_markdown()

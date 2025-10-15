@@ -6,6 +6,7 @@ from pptx.util import Pt
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE, MSO_CONNECTOR_TYPE
 
+# 完整的ppt元素对象模型
 
 class PptxBoxShapeEnum(Enum):
     RECTANGLE = "rectangle"

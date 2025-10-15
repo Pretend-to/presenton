@@ -15,9 +15,9 @@ async def app_lifespan(_: FastAPI):
     """
     Lifespan context manager for FastAPI application.
     Initializes the application data directory and checks LLM model availability.
-
+    Fastapi生命周期管理
     """
-    os.makedirs(get_app_data_directory_env(), exist_ok=True)
-    await create_db_and_tables()
-    await check_llm_and_image_provider_api_or_model_availability()
+    os.makedirs(get_app_data_directory_env(), exist_ok=True)  # 创建应用数据目录
+    await create_db_and_tables()  # 创建数据库表
+    await check_llm_and_image_provider_api_or_model_availability()  # 检查LLM模型和图片提供者API的可用性
     yield

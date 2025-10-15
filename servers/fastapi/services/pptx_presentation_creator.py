@@ -47,7 +47,7 @@ import uuid
 
 BLANK_SLIDE_LAYOUT = 6
 
-
+# PPT创建服务
 class PptxPresentationCreator:
 
     def __init__(self, ppt_model: PptxPresentationModel, temp_dir: str):
