@@ -12,6 +12,9 @@ API_V1_MOCK_ROUTER = APIRouter(prefix="/api/v1/mock", tags=["Mock"])
     response_model=List[PresentationPathAndEditPath],
 )
 async def mock_presentation_generation_completed():
+    """
+    模拟PPT生成完成
+    """
     return [
         PresentationPathAndEditPath(
             presentation_id=uuid.uuid4(),
@@ -26,6 +29,9 @@ async def mock_presentation_generation_completed():
     response_model=List[APIErrorModel],
 )
 async def mock_presentation_generation_completed():
+    """
+    模拟PPT生成失败
+    """
     return [
         APIErrorModel(
             status_code=500,

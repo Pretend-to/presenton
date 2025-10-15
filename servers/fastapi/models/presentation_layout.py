@@ -9,7 +9,7 @@ class SlideLayoutModel(BaseModel):
     id: str
     name: Optional[str] = None
     description: Optional[str] = None
-    json_schema: dict
+    json_schema: dict # json schema定义幻灯片结构
 
 
 class PresentationLayoutModel(BaseModel):

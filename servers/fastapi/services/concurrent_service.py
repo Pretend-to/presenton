@@ -2,7 +2,7 @@ import asyncio
 from asyncio import Task
 from typing import Any, Callable, Coroutine, Optional
 
-
+# 并发任务服务，管理后台异步任务
 class ConcurrentService:
     def __init__(self):
         self._background_tasks = set[Task]()

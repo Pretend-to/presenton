@@ -10,6 +10,12 @@ from utils.ollama import pull_ollama_model
 
 
 async def pull_ollama_model_background_task(model: str):
+    """
+    异步拉取ollama模型
+    - 支持实时进度追踪
+    - 数据库状态持久化 
+    - 异常处理和错误恢复
+    """
     saved_model_status = OllamaModelStatus(
         name=model,
         status="pulling",
