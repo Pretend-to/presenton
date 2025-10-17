@@ -1,8 +1,15 @@
 from fastapi import APIRouter
 
 from api.v1.education.endpoints.session import EDUCATION_SESSION_ROUTER
-from api.v1.education.endpoints.knowledge import KNOWLEDGE_ROUTER
-API_V1_EDUCATION_ROUTER = APIRouter(prefix="/api/v1/edu", tags=["Education"])
-
+from api.v1.education.endpoints.knowledge_base import KNOWLEDGE_BASE_ROUTER
+from api.v1.education.endpoints.teaching_target import EDUCATION_TEACHING_TARGET_ROUTER
+from api.v1.education.endpoints.teaching_outline import EDUCATION_TEACHING_OUTLINE_ROUTER
+from api.v1.education.endpoints.ppt_templates import EDUCATION_PPT_TEMPLATES_ROUTER
+from api.v1.education.endpoints.teaching_design import EDUCATION_TEACHING_DESIGN_ROUTER
+API_V1_EDUCATION_ROUTER = APIRouter(prefix="/api/ppt", tags=["Education"])
 API_V1_EDUCATION_ROUTER.include_router(EDUCATION_SESSION_ROUTER)
-API_V1_EDUCATION_ROUTER.include_router(KNOWLEDGE_ROUTER)
+API_V1_EDUCATION_ROUTER.include_router(KNOWLEDGE_BASE_ROUTER)
+API_V1_EDUCATION_ROUTER.include_router(EDUCATION_TEACHING_TARGET_ROUTER)
+API_V1_EDUCATION_ROUTER.include_router(EDUCATION_TEACHING_OUTLINE_ROUTER)
+API_V1_EDUCATION_ROUTER.include_router(EDUCATION_PPT_TEMPLATES_ROUTER)
+API_V1_EDUCATION_ROUTER.include_router(EDUCATION_TEACHING_DESIGN_ROUTER)
