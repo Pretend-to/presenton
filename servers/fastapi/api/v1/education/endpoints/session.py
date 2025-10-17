@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Body
 from pydantic import BaseModel
 from typing import List, Optional
@@ -5,26 +6,36 @@ import uuid
 from services.database import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.sql.ppt_create_sessions import PptCreateSessionModel
+from models.sql.ppt_create_reference_files import PptCreateReferenceFilesModel
 from utils.datetime_utils import get_current_utc_datetime
-EDUCATION_SESSION_ROUTER = APIRouter(prefix="/session")
+from enums.ppt_session import ClassType
+from models.common.R import R
+from sqlmodel import select, delete
+from sqlalchemy import and_, desc
+from typing import Optional as OptionalType
+EDUCATION_SESSION_ROUTER = APIRouter(prefix="")
 
-class CreateSessionRequest(BaseModel):
-    user_id: str
-    query: str
+class SessionConfig(BaseModel):
     pages: int
-    classtype: int
-    documents: Optional[List[str]] = None
-    knowledge_base_type: int  # 0: 班级空间 1:团队空间 2:创造空间
-    websearch_enabled: bool = False
+    classType: ClassType
+    kbIds: List[str]
+    webSearch: bool
 
-class SessionResponse(BaseModel):
-    id: uuid.UUID
-    user_id: str
-    query: str
-    current_step: int
-    # ... 其他字段
+class ChooseFile(BaseModel):
+    name: str
+    content: str
+    url: str
+class CreateSessionRequest(BaseModel):
+    userId: str
+    userInput: str
+    config: SessionConfig
+    files: List[ChooseFile]
 
-@EDUCATION_SESSION_ROUTER.post("/create", response_model=SessionResponse)
+class CreateSessionResponse(BaseModel):
+    sessionId: uuid.UUID
+    title: str
+
+@EDUCATION_SESSION_ROUTER.post("/generate/init", response_model=R)
 async def create_education_session(
     request: CreateSessionRequest,
     sql_session: AsyncSession = Depends(get_async_session)
@@ -32,45 +43,126 @@ async def create_education_session(
     """
     创建PPT生成会话
     """
-    session = PptCreateSessionModel(
-        user_id=request.user_id,
-        query=request.query,
-        pages=request.pages,
-        classtype=request.classtype,
-        documents=request.documents,
-        knowledge_base_type=request.knowledge_base_type,
-        websearch_enabled=request.websearch_enabled,
-        current_step=0
-    )
-    
-    sql_session.add(session)
-    await sql_session.commit()
-    
-    return SessionResponse(**session.model_dump())
+    try:
+        session = PptCreateSessionModel(
+            userId=request.userId,
+            userInput=request.userInput,
+            pages=request.config.pages,
+            classType=request.config.classType,
+            kbIds=request.config.kbIds,
+            webSearch=request.config.webSearch,
+            title=request.userInput+"PPT生成任务"
+        )
+        
+        sql_session.add(session)
+        
+        files = [PptCreateReferenceFilesModel(
+            sessionId=session.sessionId,
+            name=file.name,
+            content=file.content,
+            url=file.url
+        ) for file in request.files]
+        sql_session.add_all(files)
+        await sql_session.commit()
+        return R.success("初始化成功",CreateSessionResponse(sessionId=session.sessionId, title=session.title))
+    except Exception as e:
+        await sql_session.rollback()
+        return R.error("初始化失败",str(e))
 
-@EDUCATION_SESSION_ROUTER.get("/{session_id}", response_model=SessionResponse)
-async def get_session(
+
+
+# 添加新的响应模型（在现有模型后添加）
+class PptHistoryItem(BaseModel):
+    sessionId: uuid.UUID
+    state: str
+    title: str
+    created: int  # timestamp
+
+class PptHistoryResponse(BaseModel):
+    sessions: List[PptHistoryItem]
+    
+# 在现有 imports 后添加
+from sqlmodel import select, delete
+from sqlalchemy import and_, desc
+from typing import Optional as OptionalType
+
+# 添加新的响应模型（在现有模型后添加）
+class PptHistoryItem(BaseModel):
+    sessionId: uuid.UUID
+    state: str
+    title: str
+    created: datetime  # timestamp
+
+class PptHistoryResponse(BaseModel):
+    sessions: List[PptHistoryItem]
+
+# 在现有的 create_education_session 接口后添加以下两个接口：
+
+@EDUCATION_SESSION_ROUTER.get("/list", response_model=R)
+async def get_ppt_creation_history(
+    userId: str,
+    title: OptionalType[str] = None,
+    sql_session: AsyncSession = Depends(get_async_session)
+):
+    """
+    获取用户PPT创建历史记录
+    """
+    try:
+        # 构建查询条件
+        query = select(PptCreateSessionModel).where(PptCreateSessionModel.userId == userId).order_by(desc(PptCreateSessionModel.created_at))
+        
+        # 如果提供了title参数，添加模糊查询条件
+        if title:
+            query = query.where(PptCreateSessionModel.title.contains(title))
+        
+        # 执行查询
+        result = await sql_session.execute(query)
+        sessions = result.scalars().all()
+        
+        # 转换为响应格式
+        history_items = []
+        for session in sessions:
+            history_items.append(PptHistoryItem(
+                sessionId=session.sessionId,
+                state=session.state.value,  # 枚举值转为字符串
+                title=session.title,
+                created=session.created_at  # 转换为时间戳
+            ))
+        
+        return R.success("响应成功", history_items)
+        
+    except Exception as e:
+        return R.error("获取历史记录失败", str(e))
+
+
+@EDUCATION_SESSION_ROUTER.delete("/{session_id}", response_model=R)
+async def delete_ppt_session(
     session_id: uuid.UUID,
     sql_session: AsyncSession = Depends(get_async_session)
 ):
-    """获取会话信息"""
-    session = await sql_session.get(PptCreateSessionModel, session_id)
-    if not session:
-        raise HTTPException(404, "Session not found")
-    return SessionResponse(**session.model_dump())
-
-@EDUCATION_SESSION_ROUTER.patch("/{session_id}/step")
-async def update_session_step(
-    session_id: uuid.UUID,
-    step: int = Body(..., embed=True),
-    sql_session: AsyncSession = Depends(get_async_session)
-):
-    """更新会话步骤"""
-    session = await sql_session.get(PptCreateSessionModel, session_id)
-    if not session:
-        raise HTTPException(404, "Session not found")
-    
-    session.current_step = step
-    await sql_session.commit()
-    
-    return {"success": True, "current_step": step}
+    """
+    删除一条PPT记录
+    """
+    try:
+        # 查找要删除的会话
+        session = await sql_session.get(PptCreateSessionModel, session_id)
+        
+        if not session:
+            return R.error("该ppt不存在")
+        
+        # 先删除关联的参考文件记录
+        await sql_session.execute(
+            delete(PptCreateReferenceFilesModel).where(
+                PptCreateReferenceFilesModel.sessionId == session_id
+            )
+        )
+        
+        # 删除会话记录
+        await sql_session.delete(session)
+        await sql_session.commit()
+        
+        return R.success("删除成功")
+        
+    except Exception as e:
+        await sql_session.rollback()
+        return R.error("删除失败", str(e))

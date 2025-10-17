@@ -1,30 +1,38 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional,Dict
 import uuid
 from sqlalchemy import JSON, Column, DateTime, String, Integer, Boolean
 from sqlmodel import Field, SQLModel, desc
 from utils.datetime_utils import get_current_utc_datetime
-
+from enums.ppt_session import PptSessionState,ClassType
 # PPT创建会话表
 class PptCreateSessionModel(SQLModel, table=True):
     __tablename__ = "ppt_create_sessions"
     
     # 基础字段
-    id: uuid.UUID = Field(primary_key=True, default_factory=uuid.uuid4)
-    user_id: str = Field(index=True,description="用户ID")
-    query: str = Field(description="用户输入的主题")
-    
+    sessionId: uuid.UUID = Field(primary_key=True, default_factory=uuid.uuid4)
+    userId: str = Field(index=True,description="用户ID")
+    userInput: str = Field(description="用户输入的查询")
+    title: str = Field(description="LLM总结标题")
     # 配置信息
     pages: int = Field(description="页数")
-    classtype: int = Field(description="课程类别: 0: 新授课 1:复习课") 
-    documents: Optional[List[str]] = Field(sa_column=Column(JSON), default=None, description="参考文档路径列表")
-    knowledge_base_type: int = Field(description="知识库类型：0: 班级空间 1:团队空间 2:创造空间")
-    websearch_enabled: bool = Field(default=False, description="是否开启网络搜索")
+    classType: ClassType = Field(default=ClassType.NEW_LESSON, description="课程类别: 新授课 | 复习课") 
+    kbIds: List[str] = Field(sa_column=Column(JSON),description="知识库ID列表")
+    webSearch: bool = Field(default=False, description="是否开启网络搜索")
     
+    webSearchContent: str = Field(description="网络搜索内容",default="")
     # 状态管理
-    current_step: int = Field(default=0, description="当前步骤: 0: 创建 1: 生成 2: 完成")
-    #status: str = Field(default="active", description="会话状态")
-    
+    state: PptSessionState = Field(default=PptSessionState.COMFIRMFILES, description="会话状态 'confirmFiles' | 'confirmTarget' | 'confirmOutline' | 'generatePPT' | 'completeGeneration'")
+    # 教学目标
+    target: List[str] = Field(sa_column=Column(JSON),description="教学目标",default=[])
+    # 教学大纲
+    outline: Dict[str, Any] = Field(
+        default_factory=dict,  # 使用 default_factory 避免可变默认参数问题
+        sa_column=Column(JSON), 
+        description="教学大纲 (JSON格式)"
+    )
+    # 教学设计
+    design: str = Field(description="教学设计",default="")
     # 创建时间
     created_at: datetime = Field(
         sa_column=Column(
