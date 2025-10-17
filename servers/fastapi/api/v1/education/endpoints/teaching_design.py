@@ -15,7 +15,7 @@ EDUCATION_TEACHING_DESIGN_ROUTER = APIRouter(prefix="")
 
 # 在现有的响应模型后添加SSE响应模型
 class SSEFrame(BaseModel):
-    type: str  # "pending" | "streaming" | "error"
+    type: str  # "pending" | "streaming" | "finish"| "error"
     chunk: Optional[str] = None
     msg: Optional[str] = None
 
@@ -118,7 +118,7 @@ async def get_teaching_design_description(
                 await asyncio.sleep(0.1)
             
             # 发送结束信号（可选）
-            end_frame = SSEFrame(type="streaming", chunk="", msg="传输完成")
+            end_frame = SSEFrame(type="finish", chunk="", msg="传输完成")
             yield f"data: {json.dumps(end_frame.model_dump(), ensure_ascii=False)}\n\n"
             
         except Exception as e:
