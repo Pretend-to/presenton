@@ -91,7 +91,7 @@ async def get_teaching_design_description(
         try:
             # 发送pending状态
             pending_frame = SSEFrame(type="pending", msg="正在获取教学设计...")
-            yield f"data: {json.dumps(pending_frame.model_dump(), ensure_ascii=False)}\n\n"
+            yield f"{json.dumps(pending_frame.model_dump(), ensure_ascii=False)}\n\n"
             
             # 查询会话记录
             result = await sql_session.execute(
@@ -101,7 +101,7 @@ async def get_teaching_design_description(
             
             if not session:
                 error_frame = SSEFrame(type="error", msg="会话不存在")
-                yield f"data: {json.dumps(error_frame.model_dump(), ensure_ascii=False)}\n\n"
+                yield f"{json.dumps(error_frame.model_dump(), ensure_ascii=False)}\n\n"
                 return
             
             # 获取教学设计内容
@@ -112,18 +112,18 @@ async def get_teaching_design_description(
             for i in range(0, len(design_content), chunk_size):
                 chunk = design_content[i:i + chunk_size]
                 streaming_frame = SSEFrame(type="streaming", chunk=chunk)
-                yield f"data: {json.dumps(streaming_frame.model_dump(), ensure_ascii=False)}\n\n"
+                yield f"{json.dumps(streaming_frame.model_dump(), ensure_ascii=False)}\n\n"
                 
                 # 添加小延迟模拟真实的流式输出
                 await asyncio.sleep(0.1)
             
             # 发送结束信号（可选）
             end_frame = SSEFrame(type="finish", chunk="", msg="传输完成")
-            yield f"data: {json.dumps(end_frame.model_dump(), ensure_ascii=False)}\n\n"
+            yield f"{json.dumps(end_frame.model_dump(), ensure_ascii=False)}\n\n"
             
         except Exception as e:
             error_frame = SSEFrame(type="error", msg=f"获取教学设计失败: {str(e)}")
-            yield f"data: {json.dumps(error_frame.model_dump(), ensure_ascii=False)}\n\n"
+            yield f"{json.dumps(error_frame.model_dump(), ensure_ascii=False)}\n\n"
     
     return StreamingResponse(
         generate_sse(),
